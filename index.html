@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ca">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interzoo · Generador de Contingut</title>
+    <meta name="description" content="Generador diari d'idees de contingut per a Instagram d'Interzoo Andorra." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <!-- Background ambient blobs -->
+    <div class="ambient" aria-hidden="true">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-wrapper">
+
+        <!-- Header -->
+        <header class="app-header">
+            <div class="brand">
+                <span class="brand-icon">🐾</span>
+                <div class="brand-text">
+                    <span class="brand-name">Interzoo</span>
+                    <span class="brand-sub">Andorra · Generador de Contingut</span>
+                </div>
+            </div>
+            <div class="header-badge">Instagram</div>
+        </header>
+
+        <!-- API Key Section -->
+        <section class="api-section" id="api-section">
+            <label for="api-key-input" class="api-label">Clau API d'OpenAI</label>
+            <div class="api-input-row">
+                <input type="password" id="api-key-input" class="api-input" placeholder="sk-..." autocomplete="off"
+                    spellcheck="false" />
+                <button class="btn-save-key" id="btn-save-key" title="Desa la clau">Desa</button>
+            </div>
+            <p class="api-hint" id="api-status-msg">Introdueix la teva clau API per comenzar.</p>
+        </section>
+
+        <!-- Generate button -->
+        <section class="generate-section">
+            <button class="btn-generate" id="btn-generate" disabled>
+                <span class="btn-icon">✦</span>
+                <span class="btn-label">Genera 7 idees per avui</span>
+            </button>
+            <p class="generate-hint">Cada execució genera 7 idees noves per a Instagram, en català.</p>
+        </section>
+
+        <!-- Loading indicator -->
+        <div class="loader-wrapper" id="loader" aria-live="polite" aria-hidden="true">
+            <div class="loader-ring"></div>
+            <p class="loader-text">Generant idees…</p>
+        </div>
+
+        <!-- Results area -->
+        <main class="results-area" id="results-area" aria-live="polite"></main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>Dissenyat per a <strong>Interzoo Andorra</strong> · Contingut en català · model <code>gpt-4.1-nano</code>
+            </p>
+        </footer>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
