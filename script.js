@@ -17,6 +17,7 @@
     const STORAGE_KEY = 'interzoo_openai_key';
     const RECENT_IDEAS_KEY = 'interzoo_recent_ideas';
     const MAX_RECENT_IDEAS = 28;
+    const IDEA_COUNT = 4;
     let apiKey = '';
 
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -65,7 +66,7 @@
                     top_p: 0.95,
                     presence_penalty: 0.55,
                     frequency_penalty: 0.55,
-                    max_tokens: 5200,
+                    max_tokens: 3600,
                     messages: [
                         { role: 'system', content: buildSystemPrompt() },
                         { role: 'user', content: buildUserPrompt() }
@@ -100,7 +101,7 @@
             day: 'numeric'
         });
 
-        return `Genera 7 idees noves per al perfil d'Instagram d'Interzoo Andorra.
+        return `Genera exactament ${IDEA_COUNT} idees noves per al perfil d'Instagram d'Interzoo Andorra.
 Data d'avui: ${today}.
 Context o tema opcional de la persona usuària: ${context || 'cap tema concret; escull una barreja variada i útil'}.
 Idees recents que has d'evitar repetir o versionar massa:
@@ -133,7 +134,7 @@ Barreja aquests pilars sense repetir angles:
 - Servei/confiança: assessorament, nutrició especialitzada, WhatsApp, entrega a domicili, experiència de botiga, sense sonar comercial.
 
 FORMATS DISPONIBLES
-Cada una de les 7 idees ha de tenir un format diferent o molt variat entre aquests:
+Les ${IDEA_COUNT} idees han de tenir formats diferents o molt variats entre aquests:
 - Post estàtic reflexiu
 - Carrusel educatiu
 - Reel observacional de 5-7 segons
@@ -146,7 +147,7 @@ Cada una de les 7 idees ha de tenir un format diferent o molt variat entre aques
 - Moment de botiga o servei
 
 REGLA ANTI-REPETICIÓ
-No generis set variacions del mateix tema. Dins la mateixa resposta, cada idea ha de canviar com a mínim tres coses: animal, angle, format, situació quotidiana o emoció.
+No generis variacions del mateix tema. Dins la mateixa resposta, cada idea ha de canviar com a mínim tres coses: animal, angle, format, situació quotidiana o emoció.
 Evita repetir massa: alimentació, passeig, rutina, confiança, assessorament. Si apareixen, que siguin amb una mirada específica i nova.
 
 ANIMALS
@@ -158,7 +159,6 @@ Evita caricatura, colors cridaners, imatges artificials o publicitàries.
 
 POST OBLIGATORI
 El camp Post és obligatori en cada idea. No el pots ometre.
-Si falta espai, redueix Contingut o Visual, però mantén sempre Post complet.
 El Post ha d'incloure:
 - 3-6 línies de text publicable en català
 - 2-4 emoticones naturals dins del text
@@ -183,7 +183,7 @@ Combina:
 No usis hashtags que prometin descomptes ni venda agressiva.
 
 FORMAT DE RESPOSTA OBLIGATORI
-Retorna exactament 7 blocs i cap text fora dels blocs. Mantén aquestes etiquetes exactes:
+Retorna exactament ${IDEA_COUNT} blocs i cap text fora dels blocs. Mantén aquestes etiquetes exactes:
 
 IDEA 1
 Títol: [frase curta, concreta, no genèrica]
@@ -196,7 +196,7 @@ Post:
 [text complet llest per publicar amb emoticones i hashtags]
 
 IDEA 2
-... fins a IDEA 7`;
+... fins a IDEA ${IDEA_COUNT}`;
     }
 
     function parseIdeas(raw) {
@@ -227,7 +227,7 @@ IDEA 2
             }
         }
 
-        return ideas.slice(0, 7);
+        return ideas.slice(0, IDEA_COUNT);
     }
 
     function ensurePublishablePost(idea) {
@@ -473,7 +473,7 @@ IDEA 2
             loader.classList.remove('visible');
             loader.setAttribute('aria-hidden', 'true');
             btnGenerate.disabled = !apiKey;
-            btnGenerate.querySelector('.btn-label').textContent = 'Genera 7 idees per avui';
+            btnGenerate.querySelector('.btn-label').textContent = 'Genera 4 idees per avui';
         }
     }
 
