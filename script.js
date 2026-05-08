@@ -122,7 +122,7 @@ IDIOMA I TO
 Sempre en català natural. Frases curtes, elegants i clares.
 Tono adult, proper, professional, emocional però sobri. Reflexiu sense ser cursi.
 No facis humor absurd, no infantilitzis els animals i no moralitzis.
-Evita: OFERTA, compra ara, súper descompte, urgent, increïble, gatitos, perritos, peluditos, emojis excessius, frases motivacionals buides.
+Evita: OFERTA, compra ara, súper descompte, urgent, increïble, gatitos, perritos, peluditos, frases motivacionals buides.
 
 PILARS DE CONTINGUT
 Barreja aquests pilars sense repetir angles:
@@ -162,11 +162,21 @@ Per cada idea, inclou una proposta visual realista:
 - emocions reals
 Evita caricatura, colors cridaners, imatges artificials o publicitàries.
 
-EMOJIS
-Màxim 2 emojis per post. Si no calen, cap. Han de ser discrets i naturals.
+EMOTICONES
+Inclou emoticones en el text del post perquè sigui més atractiu a Instagram, però mantén l'elegància de la marca.
+Usa normalment 2-4 emoticones per post, integrades de forma natural entre frases o al començament d'alguna línia.
+Prioritza emoticones relacionades amb animals, calma, natura, coneixement i cura: 🐾 🐕 🐈 🐟 🐇 🐦 🌿 🍃 ☀️ 🌙 💧 💡 📌 🤍 💚.
+Evita emoticones cridaneres, repetides o comercials. No omplis el post d'emoticones.
 
-HASHTAGS
-8-12 hashtags al final. Barreja català, castellà i anglès. Inclou sempre #InterzooAndorra i #BenestarAnimal.
+HASHTAGS PER CAPTAR CLIENTS
+Inclou sempre 12-16 hashtags al final de cada post, separados del texto por una línea en blanco.
+Los hashtags deben ayudar a llegar a personas de Andorra y a clientes interesados en mascotas, alimentación, bienestar y asesoramiento.
+Combina:
+- Marca/local: #InterzooAndorra, #Andorra, #MascotesAndorra, #AnimalsAndorra, #BotigaAnimals, #BotigaMascotes
+- Bienestar/conocimiento: #BenestarAnimal, #CuraAnimal, #ConsellsMascotes, #EducacioCanina, #ComportamentAnimal
+- Animal específico según el post: #Gossos, #Gats, #Aquari, #Peixos, #Conills, #Ocells, #DogCare, #CatCare
+- Alcance general: #PetShop, #PetCare, #AnimalLovers, #MascotasFelices, #VidaAmbAnimals
+No uses hashtags que prometan descuentos ni venta agresiva.
 
 FORMAT DE RESPOSTA OBLIGATORI
 Retorna exactament 7 blocs i cap text fora dels blocs. Mantén aquestes etiquetes exactes:
@@ -179,7 +189,7 @@ Format: [un dels formats disponibles]
 Contingut: [què mostrar o explicar, en 2-3 frases concretes]
 Visual: [prompt visual breu per crear foto o vídeo realista]
 Post:
-[text complet llest per publicar. 3-6 línies màxim abans dels hashtags. Comença directament amb una frase amb força. Tanca el text amb una pregunta curta o reflexió. Després deixa una línia en blanc i posa els hashtags]
+[text complet llest per publicar. 3-6 línies màxim abans dels hashtags. Comença directament amb una frase amb força i integra 2-4 emoticones naturals. Tanca el text amb una pregunta curta, invitació subtil o reflexió. Després deixa una línia en blanc i posa 12-16 hashtags relacionats amb Interzoo, Andorra, el tema del post i clients de mascotes]
 
 IDEA 2
 ... fins a IDEA 7`;
