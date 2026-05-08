@@ -65,7 +65,7 @@
                     top_p: 0.95,
                     presence_penalty: 0.55,
                     frequency_penalty: 0.55,
-                    max_tokens: 3600,
+                    max_tokens: 5200,
                     messages: [
                         { role: 'system', content: buildSystemPrompt() },
                         { role: 'user', content: buildUserPrompt() }
@@ -106,7 +106,7 @@ Context o tema opcional de la persona usuària: ${context || 'cap tema concret; 
 Idees recents que has d'evitar repetir o versionar massa:
 ${recent.length ? recent.map((item, i) => `${i + 1}. ${item}`).join('\n') : 'Encara no hi ha historial.'}
 
-Prioritza idees que sonin concretes, observades i publicables. No facis una llista genèrica de consells de botiga de mascotes.`;
+Prioritza idees concretes i publicables. Cada idea ha d'incloure obligatòriament el camp Post amb text, emoticones i hashtags.`;
     }
 
     function buildSystemPrompt() {
@@ -153,14 +153,18 @@ ANIMALS
 Prioritat habitual: gossos, gats, aquari/peixos, rosegadors, ocells. No oblidis gats ni animals petits. Les races poden aparèixer quan aporten coneixement real, no decoració.
 
 VISUALS
-Per cada idea, inclou una proposta visual realista:
-- foto o vídeo amb llum natural
-- interior càlid o exterior andorrà quotidià
-- fons neutres
-- profunditat de camp suau
-- estètica lifestyle tranquil·la
-- emocions reals
+Per cada idea, inclou una proposta visual realista: foto o vídeo amb llum natural, interior càlid o exterior andorrà quotidià, fons neutres, profunditat de camp suau i emocions reals.
 Evita caricatura, colors cridaners, imatges artificials o publicitàries.
+
+POST OBLIGATORI
+El camp Post és obligatori en cada idea. No el pots ometre.
+Si falta espai, redueix Contingut o Visual, però mantén sempre Post complet.
+El Post ha d'incloure:
+- 3-6 línies de text publicable en català
+- 2-4 emoticones naturals dins del text
+- una pregunta curta, invitació subtil o reflexió abans dels hashtags
+- una línia en blanc
+- 12-16 hashtags relacionats
 
 EMOTICONES
 Inclou emoticones en el text del post perquè sigui més atractiu a Instagram, però mantén l'elegància de la marca.
@@ -169,14 +173,14 @@ Prioritza emoticones relacionades amb animals, calma, natura, coneixement i cura
 Evita emoticones cridaneres, repetides o comercials. No omplis el post d'emoticones.
 
 HASHTAGS PER CAPTAR CLIENTS
-Inclou sempre 12-16 hashtags al final de cada post, separados del texto por una línea en blanco.
-Los hashtags deben ayudar a llegar a personas de Andorra y a clientes interesados en mascotas, alimentación, bienestar y asesoramiento.
+Inclou sempre 12-16 hashtags al final de cada post, separats del text per una línia en blanc.
+Els hashtags han d'ajudar a arribar a persones d'Andorra i a clients interessats en mascotes, alimentació, benestar i assessorament.
 Combina:
 - Marca/local: #InterzooAndorra, #Andorra, #MascotesAndorra, #AnimalsAndorra, #BotigaAnimals, #BotigaMascotes
-- Bienestar/conocimiento: #BenestarAnimal, #CuraAnimal, #ConsellsMascotes, #EducacioCanina, #ComportamentAnimal
-- Animal específico según el post: #Gossos, #Gats, #Aquari, #Peixos, #Conills, #Ocells, #DogCare, #CatCare
-- Alcance general: #PetShop, #PetCare, #AnimalLovers, #MascotasFelices, #VidaAmbAnimals
-No uses hashtags que prometan descuentos ni venta agresiva.
+- Benestar/coneixement: #BenestarAnimal, #CuraAnimal, #ConsellsMascotes, #EducacioCanina, #ComportamentAnimal
+- Animal específic segons el post: #Gossos, #Gats, #Aquari, #Peixos, #Conills, #Ocells, #DogCare, #CatCare
+- Abast general: #PetShop, #PetCare, #AnimalLovers, #MascotasFelices, #VidaAmbAnimals
+No usis hashtags que prometin descomptes ni venda agressiva.
 
 FORMAT DE RESPOSTA OBLIGATORI
 Retorna exactament 7 blocs i cap text fora dels blocs. Mantén aquestes etiquetes exactes:
@@ -189,7 +193,7 @@ Format: [un dels formats disponibles]
 Contingut: [què mostrar o explicar, en 2-3 frases concretes]
 Visual: [prompt visual breu per crear foto o vídeo realista]
 Post:
-[text complet llest per publicar. 3-6 línies màxim abans dels hashtags. Comença directament amb una frase amb força i integra 2-4 emoticones naturals. Tanca el text amb una pregunta curta, invitació subtil o reflexió. Després deixa una línia en blanc i posa 12-16 hashtags relacionats amb Interzoo, Andorra, el tema del post i clients de mascotes]
+[text complet llest per publicar amb emoticones i hashtags]
 
 IDEA 2
 ... fins a IDEA 7`;
@@ -204,25 +208,73 @@ IDEA 2
             const type = extract(block, /Tipus\s*:\s*(.+)/i);
             const animal = extract(block, /Animal\s*:\s*(.+)/i);
             const format = extract(block, /Format\s*:\s*(.+)/i);
-            const content = extract(block, /Contingut\s*:\s*([\s\S]+?)(?=Visual\s*:|Post\s*:|$)/i);
-            const visual = extract(block, /Visual\s*:\s*([\s\S]+?)(?=Post\s*:|$)/i);
-            const postMatch = block.match(/Post\s*:\s*\n([\s\S]+)/i);
-            const post = postMatch ? postMatch[1].trim() : '';
+            const content = extract(block, /Contingut\s*:\s*([\s\S]+?)(?=Visual\s*:|Post\s*:|Text del post\s*:|Caption\s*:|$)/i);
+            const visual = extract(block, /Visual\s*:\s*([\s\S]+?)(?=Post\s*:|Text del post\s*:|Caption\s*:|$)/i);
+            const post = extract(block, /(?:Post|Text del post|Caption|Peu de foto)\s*:\s*([\s\S]+)/i);
 
             if (title) {
-                ideas.push({
+                const idea = {
                     title: title.trim(),
                     type: type.trim(),
                     animal: animal.trim(),
                     format: format.trim(),
                     content: content.trim(),
                     visual: visual.trim(),
-                    post,
-                });
+                    post: post.trim(),
+                };
+                idea.post = ensurePublishablePost(idea);
+                ideas.push(idea);
             }
         }
 
         return ideas.slice(0, 7);
+    }
+
+    function ensurePublishablePost(idea) {
+        let post = (idea.post || '').trim();
+        const hashtags = buildHashtags(idea).join(' ');
+        const icon = animalIcon(idea.animal);
+
+        if (!post) {
+            const body = [
+                `${icon} ${idea.title}`,
+                `${idea.content || 'Una idea senzilla per observar millor el benestar dels animals i cuidar-los amb més consciència.'}`,
+                'A vegades, entendre un petit gest canvia tota la convivència. 🌿',
+                'Ho havies observat mai?'
+            ].join('\n');
+            return `${body}\n\n${hashtags}`;
+        }
+
+        if (!hasEmoji(post)) {
+            post = `${icon} ${post}\n🌿`;
+        }
+
+        if (!post.includes('#')) {
+            post = `${post}\n\n${hashtags}`;
+        }
+
+        return post;
+    }
+
+    function buildHashtags(idea) {
+        const animal = (idea.animal || '').toLowerCase();
+        const tags = [
+            '#InterzooAndorra', '#Andorra', '#MascotesAndorra', '#AnimalsAndorra',
+            '#BotigaMascotes', '#BenestarAnimal', '#CuraAnimal', '#ConsellsMascotes',
+            '#PetShop', '#PetCare', '#AnimalLovers', '#VidaAmbAnimals'
+        ];
+
+        if (animal.includes('gos')) tags.push('#Gossos', '#EducacioCanina', '#DogCare');
+        if (animal.includes('gat')) tags.push('#Gats', '#ComportamentFeli', '#CatCare');
+        if (animal.includes('aquari') || animal.includes('peix')) tags.push('#Aquari', '#Peixos', '#AquariumCare');
+        if (animal.includes('roseg') || animal.includes('conill')) tags.push('#Conills', '#Rosegadors', '#SmallPets');
+        if (animal.includes('ocell')) tags.push('#Ocells', '#BirdCare');
+
+        return [...new Set(tags)].slice(0, 16);
+    }
+
+    function hasEmoji(text) {
+        return /[\uD800-\uDBFF][\uDC00-\uDFFF]/.test(text);
     }
 
     function extract(text, regex) {
