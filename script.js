@@ -1,24 +1,24 @@
 /* ===================================================
-   INTERZOO ANDORRA — Generador de Contingut Instagram
+   INTERZOO ANDORRA - Generador de Contingut Instagram
    Connecta amb l'API d'OpenAI (gpt-4.1-nano)
    =================================================== */
 
 (function () {
     'use strict';
 
-    // ── DOM refs ──────────────────────────────────────────
     const apiInput = document.getElementById('api-key-input');
     const btnSaveKey = document.getElementById('btn-save-key');
     const apiStatusMsg = document.getElementById('api-status-msg');
     const btnGenerate = document.getElementById('btn-generate');
     const loader = document.getElementById('loader');
     const resultsArea = document.getElementById('results-area');
+    const dailyBrief = document.getElementById('daily-brief');
 
-    // ── State ─────────────────────────────────────────────
     const STORAGE_KEY = 'interzoo_openai_key';
+    const RECENT_IDEAS_KEY = 'interzoo_recent_ideas';
+    const MAX_RECENT_IDEAS = 28;
     let apiKey = '';
 
-    // ── Init ──────────────────────────────────────────────
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
         apiKey = saved;
@@ -27,11 +27,10 @@
         enableGenerate();
     }
 
-    // ── Save key ──────────────────────────────────────────
     btnSaveKey.addEventListener('click', () => {
         const val = apiInput.value.trim();
         if (!val.startsWith('sk-') || val.length < 20) {
-            setKeyStatus('error', '✗ La clau no sembla vàlida. Ha de começar per sk-…');
+            setKeyStatus('error', '✗ La clau no sembla vàlida. Ha de començar per sk-…');
             disableGenerate();
             return;
         }
@@ -45,7 +44,6 @@
         if (e.key === 'Enter') btnSaveKey.click();
     });
 
-    // ── Generate ──────────────────────────────────────────
     btnGenerate.addEventListener('click', generateIdeas);
 
     async function generateIdeas() {
@@ -63,11 +61,14 @@
                 },
                 body: JSON.stringify({
                     model: 'gpt-4.1-nano',
-                    temperature: 0.85,
-                    max_tokens: 2600,
+                    temperature: 1.05,
+                    top_p: 0.95,
+                    presence_penalty: 0.55,
+                    frequency_penalty: 0.55,
+                    max_tokens: 3600,
                     messages: [
                         { role: 'system', content: buildSystemPrompt() },
-                        { role: 'user', content: 'Genera les 7 idees de contingut per avui.' }
+                        { role: 'user', content: buildUserPrompt() }
                     ]
                 }),
             });
@@ -79,8 +80,9 @@
 
             const data = await response.json();
             const text = data.choices?.[0]?.message?.content || '';
-            renderIdeas(parseIdeas(text));
-
+            const ideas = parseIdeas(text);
+            renderIdeas(ideas);
+            rememberIdeas(ideas);
         } catch (e) {
             renderError(e.message);
         } finally {
@@ -88,91 +90,129 @@
         }
     }
 
-    // ── Prompt ────────────────────────────────────────────
-    function buildSystemPrompt() {
-        return `Ets un generador expert de contingut per a Instagram per al perfil d'Interzoo Andorra.
-Interzoo és una botiga especialitzada en animals de companyia a Andorra (alimentació, accessoris i assessorament).
+    function buildUserPrompt() {
+        const context = dailyBrief.value.trim();
+        const recent = getRecentIdeas();
+        const today = new Date().toLocaleDateString('ca-AD', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
 
-VALORS: benestar animal, responsabilitat, coneixement, calma, confiança, proximitat local.
-OBJECTIU: posicionar-se com a experts, generar confiança. La venda és una conseqüència, NO l'objectiu.
+        return `Genera 7 idees noves per al perfil d'Instagram d'Interzoo Andorra.
+Data d'avui: ${today}.
+Context o tema opcional de la persona usuària: ${context || 'cap tema concret; escull una barreja variada i útil'}.
+Idees recents que has d'evitar repetir o versionar massa:
+${recent.length ? recent.map((item, i) => `${i + 1}. ${item}`).join('\n') : 'Encara no hi ha historial.'}
 
-IDIOMA: Sempre en català. Frases curtes, naturals, correctes però no formals. Proper i tranquil.
-
-ESTIL: Proper · Tranquil · Elegant · Reflexiu · Madur · Confiable.
-MAI: infantil · exagerat · comercial · cridaner · "venedor".
-NO USAR: "OFERTA", "COMPRA ARA", "SUPER DESCOMPTE", diminutius tipus "gatitos/perritos".
-
-DISTRIBUCIÓ OBLIGATÒRIA (entre les 7 idees):
-- 2 Educatives (alimentació, rutines, salut preventiva, estimulació, comportament)
-- 2 Reflexives/Emocionals (relació persona-animal, ritme, convivència, comprensió)
-- 1-2 Curiositats (conducta felina, llenguatge caní, hàbits naturals, coses poc conegudes)
-- 1-2 Marca/Servei (sense vendre: assessorament, nutrició, experiència, confiança)
-
-ANIMALS: Gossos > Gats > Aquari > Rosegadors/Ocells (ocasional)
-
-EMOJIS PERMITITS (poc, amb criteri i elegància):
-- Animals: 🐾 🐕 🐈 🐟 🐇
-- Natura/calma: 🌿 🍃 ☀️ 🌙 💧
-- Coneixement: 💡 📌
-- Cor/emoció: 🤍 💚
-- Màxim 3 emojis per post. MAI emojis cridaners ni excessius.
-
-FORMAT DE RESPOSTA — estrictament aquest, sense cap altre text fora de l'estructura:
-
-IDEA 1
-Títol: [frase curta atractiva]
-Contingut: [explicació breu de què mostrar o explicar, 2-3 frases]
-Tipus: Educatiu
-Animal: Gos
-Post:
-[text complet del post d'Instagram, llest per publicar, en català, amb emojis apropiats i hashtags al final. 3-5 línies màxim de text + 8-12 hashtags rellevants en català/castellà/anglès mezclats. El text ha de sonar natural, proper, expert. NO és un anunci. Acaba sempre amb una pregunta reflexiva o invitació subtil.]
-
-IDEA 2
-Títol: ...
-Contingut: ...
-Tipus: Reflexiu
-Animal: Gat
-Post:
-[text complet...]
-
-[...fins a IDEA 7]
-
-Regles del Post:
-- Comença directament amb el missatge, sense "Hola!" ni introducció buida
-- Màxim 3 emojis integrats de forma natural al text
-- Separa els hashtags del text amb una línia en blanc
-- 8-12 hashtags: combina català, castellà i anglès
-- Inclou sempre #InterzooAndorra i #BenestArAnimal
-- Acaba el text (no els hashtags) amb una pregunta curta o reflexió
-- Cada post ha de sonar diferent dels altres`;
+Prioritza idees que sonin concretes, observades i publicables. No facis una llista genèrica de consells de botiga de mascotes.`;
     }
 
-    // ── Parse ─────────────────────────────────────────────
+    function buildSystemPrompt() {
+        return `Ets l'estratega de contingut d'Instagram d'Interzoo Andorra, una botiga especialitzada en animals de companyia.
+
+IDENTITAT DE MARCA
+La sensació central ha de ser: "Aquí entenen els animals".
+No ha de sonar a: "Aquí intenten vendre'm coses".
+Interzoo transmet benestar animal, coneixement, calma, confiança, assessorament expert i proximitat local.
+La venda és una conseqüència de la confiança, mai el centre del post.
+
+IDIOMA I TO
+Sempre en català natural. Frases curtes, elegants i clares.
+Tono adult, proper, professional, emocional però sobri. Reflexiu sense ser cursi.
+No facis humor absurd, no infantilitzis els animals i no moralitzis.
+Evita: OFERTA, compra ara, súper descompte, urgent, increïble, gatitos, perritos, peluditos, emojis excessius, frases motivacionals buides.
+
+PILARS DE CONTINGUT
+Barreja aquests pilars sense repetir angles:
+- Educatiu útil: comportament, llenguatge corporal, olfacte, rutines, estimulació mental, alimentació, convivència, enriquiment ambiental, benestar emocional.
+- Emocional/reflexiu: ritme dels animals, calma, observació, vincle, convivència conscient, harmonia a casa.
+- Curiositat amb valor: races, conducta canina o felina, bigotis, ulls, instints, hàbits naturals, coses poc conegudes però útils.
+- Estacional/contextual: fred, calor, neu, vacances, Nadal, Reis, Setmana Santa, canvis de rutina a Andorra, sempre des del benestar quotidià.
+- Servei/confiança: assessorament, nutrició especialitzada, WhatsApp, entrega a domicili, experiència de botiga, sense sonar comercial.
+
+FORMATS DISPONIBLES
+Cada una de les 7 idees ha de tenir un format diferent o molt variat entre aquests:
+- Post estàtic reflexiu
+- Carrusel educatiu
+- Reel observacional de 5-7 segons
+- Story amb pregunta subtil
+- Mini guia pràctica
+- Sabies que...?
+- Error freqüent explicat amb calma
+- Checklist suau
+- Mite vs realitat
+- Moment de botiga o servei
+
+REGLA ANTI-REPETICIÓ
+No generis set variacions del mateix tema. Dins la mateixa resposta, cada idea ha de canviar com a mínim tres coses: animal, angle, format, situació quotidiana o emoció.
+Evita repetir massa: alimentació, passeig, rutina, confiança, assessorament. Si apareixen, que siguin amb una mirada específica i nova.
+
+ANIMALS
+Prioritat habitual: gossos, gats, aquari/peixos, rosegadors, ocells. No oblidis gats ni animals petits. Les races poden aparèixer quan aporten coneixement real, no decoració.
+
+VISUALS
+Per cada idea, inclou una proposta visual realista:
+- foto o vídeo amb llum natural
+- interior càlid o exterior andorrà quotidià
+- fons neutres
+- profunditat de camp suau
+- estètica lifestyle tranquil·la
+- emocions reals
+Evita caricatura, colors cridaners, imatges artificials o publicitàries.
+
+EMOJIS
+Màxim 2 emojis per post. Si no calen, cap. Han de ser discrets i naturals.
+
+HASHTAGS
+8-12 hashtags al final. Barreja català, castellà i anglès. Inclou sempre #InterzooAndorra i #BenestarAnimal.
+
+FORMAT DE RESPOSTA OBLIGATORI
+Retorna exactament 7 blocs i cap text fora dels blocs. Mantén aquestes etiquetes exactes:
+
+IDEA 1
+Títol: [frase curta, concreta, no genèrica]
+Tipus: [Educatiu | Reflexiu | Curiositat | Temporal | Servei]
+Animal: [Gos | Gat | Aquari | Rosegador | Ocell | General]
+Format: [un dels formats disponibles]
+Contingut: [què mostrar o explicar, en 2-3 frases concretes]
+Visual: [prompt visual breu per crear foto o vídeo realista]
+Post:
+[text complet llest per publicar. 3-6 línies màxim abans dels hashtags. Comença directament amb una frase amb força. Tanca el text amb una pregunta curta o reflexió. Després deixa una línia en blanc i posa els hashtags]
+
+IDEA 2
+... fins a IDEA 7`;
+    }
+
     function parseIdeas(raw) {
         const ideas = [];
         const blocks = raw.split(/IDEA\s+\d+/i).filter(b => b.trim());
 
         for (const block of blocks) {
             const title = extract(block, /Títol\s*:\s*(.+)/i);
-            const content = extract(block, /Contingut\s*:\s*([\s\S]+?)(?=Tipus\s*:|$)/i);
             const type = extract(block, /Tipus\s*:\s*(.+)/i);
             const animal = extract(block, /Animal\s*:\s*(.+)/i);
-            // Post: everything after "Post:\n" until end of block
+            const format = extract(block, /Format\s*:\s*(.+)/i);
+            const content = extract(block, /Contingut\s*:\s*([\s\S]+?)(?=Visual\s*:|Post\s*:|$)/i);
+            const visual = extract(block, /Visual\s*:\s*([\s\S]+?)(?=Post\s*:|$)/i);
             const postMatch = block.match(/Post\s*:\s*\n([\s\S]+)/i);
             const post = postMatch ? postMatch[1].trim() : '';
 
             if (title) {
                 ideas.push({
                     title: title.trim(),
-                    content: content.trim(),
                     type: type.trim(),
                     animal: animal.trim(),
-                    post: post,
+                    format: format.trim(),
+                    content: content.trim(),
+                    visual: visual.trim(),
+                    post,
                 });
             }
         }
 
-        return ideas;
+        return ideas.slice(0, 7);
     }
 
     function extract(text, regex) {
@@ -180,7 +220,6 @@ Regles del Post:
         return m ? m[1].trim() : '';
     }
 
-    // ── Render ────────────────────────────────────────────
     function renderIdeas(ideas) {
         if (!ideas.length) {
             renderError('No s\'han pogut interpretar les idees generades. Torna-ho a provar.');
@@ -195,8 +234,6 @@ Regles del Post:
         const typeKey = classifyType(idea.type);
         const typeLabel = idea.type || 'General';
         const animalEmoji = animalIcon(idea.animal);
-
-        // Split post into text body and hashtags
         const { postBody, hashtags } = splitPost(idea.post);
 
         const card = document.createElement('article');
@@ -209,8 +246,9 @@ Regles del Post:
       <div class="card-top">
         <span class="card-index">Idea ${index}</span>
         <div class="card-badges">
-          <span class="badge badge-type ${typeKey}">${typeLabel}</span>
-          <span class="badge badge-animal">${animalEmoji} ${idea.animal || 'General'}</span>
+          <span class="badge badge-type ${typeKey}">${escapeHtml(typeLabel)}</span>
+          <span class="badge badge-animal">${animalEmoji} ${escapeHtml(idea.animal || 'General')}</span>
+          ${idea.format ? `<span class="badge badge-format">${escapeHtml(idea.format)}</span>` : ''}
         </div>
       </div>
 
@@ -227,22 +265,34 @@ Regles del Post:
       </div>
       ` : ''}
 
+      ${idea.visual ? `
+      <div class="visual-prompt">
+        <div class="visual-prompt-header">
+          <span class="visual-prompt-label">Idea visual</span>
+        </div>
+        <div class="visual-prompt-body">${escapeHtml(idea.visual)}</div>
+      </div>
+      ` : ''}
+
       <div class="card-footer">
-        <button class="btn-copy" data-index="${index}" aria-label="Copia el post ${index}">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-          Copia el post
+        <button class="btn-copy" data-kind="post" aria-label="Copia el post ${index}">
+          ${copyIcon()} Copia el post
         </button>
+        ${idea.visual ? `<button class="btn-copy" data-kind="visual" aria-label="Copia la idea visual ${index}">${copyIcon()} Copia visual</button>` : ''}
       </div>
     `;
 
-        card.querySelector('.btn-copy').addEventListener('click', () => copyPost(idea.post || idea.title, card.querySelector('.btn-copy')));
+        const postButton = card.querySelector('[data-kind="post"]');
+        postButton.addEventListener('click', () => copyText(idea.post || idea.title, postButton, 'Copia el post'));
+
+        const visualButton = card.querySelector('[data-kind="visual"]');
+        if (visualButton) {
+            visualButton.addEventListener('click', () => copyText(idea.visual, visualButton, 'Copia visual'));
+        }
+
         return card;
     }
 
-    // Split the post into body text and hashtag line(s)
     function splitPost(post) {
         if (!post) return { postBody: '', hashtags: '' };
         const lines = post.split('\n');
@@ -252,8 +302,7 @@ Regles del Post:
 
         for (const line of lines) {
             const trimmed = line.trim();
-            // A line is "hashtag only" if most of its words start with #
-            const words = trimmed.split(/\s+/);
+            const words = trimmed.split(/\s+/).filter(Boolean);
             const hashWords = words.filter(w => w.startsWith('#')).length;
             if (hashWords > 0 && hashWords >= words.length * 0.6) {
                 inHashtags = true;
@@ -276,6 +325,7 @@ Regles del Post:
         if (t.includes('educat')) return 'edu';
         if (t.includes('reflex') || t.includes('emoc')) return 'ref';
         if (t.includes('curiosit')) return 'cur';
+        if (t.includes('tempor') || t.includes('estacional')) return 'season';
         if (t.includes('marca') || t.includes('servei')) return 'brand';
         return 'edu';
     }
@@ -290,28 +340,46 @@ Regles del Post:
         return '🐾';
     }
 
-    function copyPost(text, btn) {
+    function rememberIdeas(ideas) {
+        if (!ideas.length) return;
+        const current = getRecentIdeas();
+        const fresh = ideas.map(idea => {
+            const parts = [idea.title, idea.type, idea.animal, idea.format].filter(Boolean);
+            return parts.join(' · ');
+        });
+        const merged = fresh.concat(current).filter(Boolean);
+        const unique = [...new Set(merged)].slice(0, MAX_RECENT_IDEAS);
+        localStorage.setItem(RECENT_IDEAS_KEY, JSON.stringify(unique));
+    }
+
+    function getRecentIdeas() {
+        try {
+            const parsed = JSON.parse(localStorage.getItem(RECENT_IDEAS_KEY) || '[]');
+            return Array.isArray(parsed) ? parsed.slice(0, MAX_RECENT_IDEAS) : [];
+        } catch (_) {
+            return [];
+        }
+    }
+
+    function copyText(text, btn, originalLabel) {
         navigator.clipboard.writeText(text).then(() => {
             btn.classList.add('copied');
-            btn.innerHTML = `
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        Copiat!
-      `;
+            btn.innerHTML = `${checkIcon()} Copiat!`;
             setTimeout(() => {
                 btn.classList.remove('copied');
-                btn.innerHTML = `
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-          Copia el post
-        `;
-            }, 2500);
+                btn.innerHTML = `${copyIcon()} ${originalLabel}`;
+            }, 2200);
         }).catch(() => {
             btn.textContent = 'Error';
         });
+    }
+
+    function copyIcon() {
+        return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+    }
+
+    function checkIcon() {
+        return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
     }
 
     function renderError(msg) {
@@ -329,12 +397,10 @@ Regles del Post:
             .replace(/"/g, '&quot;');
     }
 
-    // Like escapeHtml but preserves newlines as <br>
     function escapeHtmlNl(str) {
         return escapeHtml(str).replace(/\n/g, '<br>');
     }
 
-    // ── UI helpers ────────────────────────────────────────
     function setLoading(on) {
         if (on) {
             loader.classList.add('visible');
@@ -344,7 +410,7 @@ Regles del Post:
         } else {
             loader.classList.remove('visible');
             loader.setAttribute('aria-hidden', 'true');
-            btnGenerate.disabled = false;
+            btnGenerate.disabled = !apiKey;
             btnGenerate.querySelector('.btn-label').textContent = 'Genera 7 idees per avui';
         }
     }
