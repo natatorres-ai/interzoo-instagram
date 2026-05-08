@@ -15,8 +15,6 @@
 </head>
 
 <body>
-
-    <!-- Background ambient blobs -->
     <div class="ambient" aria-hidden="true">
         <div class="blob blob-1"></div>
         <div class="blob blob-2"></div>
@@ -24,8 +22,6 @@
     </div>
 
     <div class="app-wrapper">
-
-        <!-- Header -->
         <header class="app-header">
             <div class="brand">
                 <span class="brand-icon">🐾</span>
@@ -37,7 +33,6 @@
             <div class="header-badge">Instagram</div>
         </header>
 
-        <!-- API Key Section -->
         <section class="api-section" id="api-section">
             <label for="api-key-input" class="api-label">Clau API d'OpenAI</label>
             <div class="api-input-row">
@@ -45,33 +40,34 @@
                     spellcheck="false" />
                 <button class="btn-save-key" id="btn-save-key" title="Desa la clau">Desa</button>
             </div>
-            <p class="api-hint" id="api-status-msg">Introdueix la teva clau API per comenzar.</p>
+            <p class="api-hint" id="api-status-msg">Introdueix la teva clau API per començar.</p>
         </section>
 
-        <!-- Generate button -->
+        <section class="brief-section">
+            <label for="daily-brief" class="api-label">Tema o context d'avui</label>
+            <textarea id="daily-brief" class="brief-input" rows="3"
+                placeholder="Opcional: fred a Andorra, gats indoor, gos sènior, olfacte, entrega a domicili, raça concreta..."></textarea>
+            <p class="api-hint">Si ho deixes buit, la app barreja educació, emoció, curiositats, temporada i servei sense repetir idees recents.</p>
+        </section>
+
         <section class="generate-section">
             <button class="btn-generate" id="btn-generate" disabled>
                 <span class="btn-icon">✦</span>
                 <span class="btn-label">Genera 7 idees per avui</span>
             </button>
-            <p class="generate-hint">Cada execució genera 7 idees noves per a Instagram, en català.</p>
+            <p class="generate-hint">Posts en català, amb format, text publicable i idea visual per a imatge o vídeo.</p>
         </section>
 
-        <!-- Loading indicator -->
         <div class="loader-wrapper" id="loader" aria-live="polite" aria-hidden="true">
             <div class="loader-ring"></div>
-            <p class="loader-text">Generant idees…</p>
+            <p class="loader-text">Generant idees amb més varietat…</p>
         </div>
 
-        <!-- Results area -->
         <main class="results-area" id="results-area" aria-live="polite"></main>
 
-        <!-- Footer -->
         <footer class="app-footer">
-            <p>Dissenyat per a <strong>Interzoo Andorra</strong> · Contingut en català · model <code>gpt-4.1-nano</code>
-            </p>
+            <p>Dissenyat per a <strong>Interzoo Andorra</strong> · contingut en català · model <code>gpt-4.1-nano</code></p>
         </footer>
-
     </div>
 
     <script src="script.js"></script>
