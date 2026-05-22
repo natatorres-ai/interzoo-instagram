@@ -150,10 +150,10 @@
                 'Authorization': `Bearer ${key}`
             },
             body: JSON.stringify({
-                model: "dall-e-3",
+                model: "dall-e-2",
                 prompt: prompt,
                 n: 1,
-                size: "1024x1792"
+                size: "1024x1024"
             })
         });
 
