@@ -112,6 +112,7 @@
                 throw new Error(err?.error?.message || `Error HTTP ${response.status}`);
             }
 
+            const data = await response.json();
             const text = data.choices?.[0]?.message?.content || '';
             const ideas = parseIdeas(text);
             
