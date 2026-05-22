@@ -153,8 +153,7 @@
                 model: "dall-e-3",
                 prompt: prompt,
                 n: 1,
-                size: "1024x1792",
-                response_format: "b64_json"
+                size: "1024x1792"
             })
         });
 
@@ -164,12 +163,13 @@
         }
 
         const data = await response.json();
-        return data.data[0].b64_json;
+        return data.data[0].url;
     }
 
-    function drawHookOnImage(base64Str, hookText) {
+    function drawHookOnImage(imageUrl, hookText) {
         return new Promise((resolve, reject) => {
             const img = new Image();
+            img.crossOrigin = 'Anonymous';
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 canvas.width = img.width;
@@ -226,8 +226,8 @@
 
                 resolve(canvas.toDataURL('image/png'));
             };
-            img.onerror = () => reject(new Error('No s\'ha pogut carregar la imatge al Canvas'));
-            img.src = 'data:image/png;base64,' + base64Str;
+            img.onerror = () => reject(new Error('No s\'ha pogut carregar la imatge al Canvas. Pot ser un problema de permisos CORS de l\'API.'));
+            img.src = imageUrl;
         });
     }
 
