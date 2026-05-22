@@ -799,6 +799,58 @@ body {
     background: rgba(0,0,0,0.5);
 }
 
+/* === IMAGE PREVIEW & DOWNLOAD === */
+.preview-image-container {
+    background: transparent;
+    border: none;
+}
+
+.preview-image-container .block-header {
+    background: transparent;
+    border-bottom: none;
+    padding: 0 0 0.5rem 0;
+}
+
+.image-content {
+    padding: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    justify-content: center;
+    border: 1px solid var(--border-strong);
+}
+
+.generated-image {
+    width: 100%;
+    height: auto;
+    max-height: 700px;
+    object-fit: contain;
+    display: block;
+}
+
+.btn-download {
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(124, 158, 135, 0.3);
+}
+
+.btn-download:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(124, 158, 135, 0.4);
+    background: #6b8a75;
+}
+
 /* === ERROR CARD === */
 .error-card {
     background: rgba(200, 80, 80, 0.07);

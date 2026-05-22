@@ -112,15 +112,122 @@
                 throw new Error(err?.error?.message || `Error HTTP ${response.status}`);
             }
 
-            const data = await response.json();
             const text = data.choices?.[0]?.message?.content || '';
-            renderIdeas(parseIdeas(text));
+            const ideas = parseIdeas(text);
+            
+            if (ideas.length > 0) {
+                const idea = ideas[0];
+                if (idea.promptImatge) {
+                    setLoaderText('Generant imatge (DALL·E 3)… Això pot trigar uns segons.');
+                    try {
+                        const base64Image = await generateImage(idea.promptImatge, apiKey);
+                        const finalImageUrl = await drawHookOnImage(base64Image, idea.hook);
+                        idea.finalImageUrl = finalImageUrl;
+                    } catch (imgErr) {
+                        console.error("Error generant la imatge:", imgErr);
+                        idea.imageError = imgErr.message;
+                    }
+                }
+                renderIdeas([idea]);
+            } else {
+                renderError('No s\'ha pogut generar cap proposta.');
+            }
 
         } catch (e) {
             renderError(e.message);
         } finally {
             setLoading(false);
         }
+    }
+
+    // ── Image Generation ──────────────────────────────────
+    async function generateImage(prompt, key) {
+        const response = await fetch('https://api.openai.com/v1/images/generations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${key}`
+            },
+            body: JSON.stringify({
+                model: "dall-e-3",
+                prompt: prompt,
+                n: 1,
+                size: "1024x1792",
+                response_format: "b64_json"
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err?.error?.message || `Error HTTP ${response.status} en la imatge`);
+        }
+
+        const data = await response.json();
+        return data.data[0].b64_json;
+    }
+
+    function drawHookOnImage(base64Str, hookText) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+
+                // Draw base image
+                ctx.drawImage(img, 0, 0);
+
+                // Add gradient overlay at the top for better text readability
+                const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.4);
+                gradient.addColorStop(0, 'rgba(0, 0, 0, 0.45)');
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height * 0.4);
+
+                // Configure text style
+                ctx.font = '600 80px "Inter", sans-serif';
+                ctx.fillStyle = '#f8f9fa';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                
+                // Add subtle shadow
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                ctx.shadowBlur = 20;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 4;
+
+                // Split text into lines if too long (simple word wrap)
+                const words = hookText.split(' ');
+                let lines = [];
+                let currentLine = '';
+                const maxWidth = canvas.width * 0.85;
+
+                for (let i = 0; i < words.length; i++) {
+                    const testLine = currentLine + words[i] + ' ';
+                    const metrics = ctx.measureText(testLine);
+                    if (metrics.width > maxWidth && i > 0) {
+                        lines.push(currentLine.trim());
+                        currentLine = words[i] + ' ';
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+                lines.push(currentLine.trim());
+
+                // Draw lines
+                let y = 120; // top padding
+                const lineHeight = 100;
+                for (const line of lines) {
+                    ctx.fillText(line, canvas.width / 2, y);
+                    y += lineHeight;
+                }
+
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = () => reject(new Error('No s\'ha pogut carregar la imatge al Canvas'));
+            img.src = 'data:image/png;base64,' + base64Str;
+        });
     }
 
     // ── Prompt ────────────────────────────────────────────
@@ -230,6 +337,31 @@ Prompt Vídeo: [Prompt alternatiu en anglès per generar un vídeo de 5-7 segons
       <div class="card-blocks" style="margin-top: 1rem;">
     `;
 
+        if (idea.finalImageUrl) {
+            html += `
+            <div class="block-container preview-image-container">
+                <div class="block-header">
+                    <span class="block-title">Resultat Visual</span>
+                    <a href="${idea.finalImageUrl}" download="interzoo_post.png" class="btn-download" aria-label="Descarrega la imatge">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Descarrega Imatge
+                    </a>
+                </div>
+                <div class="block-content image-content">
+                    <img src="${idea.finalImageUrl}" alt="Imatge generada amb el hook" class="generated-image" />
+                </div>
+            </div>`;
+        } else if (idea.imageError) {
+             html += `
+            <div class="error-card" style="margin-bottom: 1rem;">
+                <strong>Error al generar la imatge:</strong> ${escapeHtml(idea.imageError)}
+            </div>`;
+        }
+
         html += buildBlock('Hook per a Imatge/Vídeo', idea.hook, 'hook');
         html += buildBlock('Text del Post', idea.text, 'text');
         html += buildBlock('Hashtags', idea.hashtags, 'hashtags');
@@ -317,6 +449,7 @@ Prompt Vídeo: [Prompt alternatiu en anglès per generar un vídeo de 5-7 segons
         if (on) {
             loader.classList.add('visible');
             loader.setAttribute('aria-hidden', 'false');
+            setLoaderText('Pensant en una idea fantàstica…');
             btnGenerate.disabled = true;
             btnGenerate.querySelector('.btn-label').textContent = 'Generant…';
         } else {
@@ -325,6 +458,11 @@ Prompt Vídeo: [Prompt alternatiu en anglès per generar un vídeo de 5-7 segons
             btnGenerate.disabled = false;
             btnGenerate.querySelector('.btn-label').textContent = 'Genera proposta';
         }
+    }
+
+    function setLoaderText(msg) {
+        const p = loader.querySelector('.loader-text');
+        if (p) p.textContent = msg;
     }
 
     function setKeyStatus(type, msg) {
