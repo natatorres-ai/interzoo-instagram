@@ -97,7 +97,7 @@
                     'Authorization': `Bearer ${apiKey}`,
                 },
                 body: JSON.stringify({
-                    model: 'gpt-4.1-nano',
+                    model: 'gpt-4o-mini',
                     temperature: 0.85,
                     max_tokens: 2600,
                     messages: [
@@ -150,10 +150,10 @@
                 'Authorization': `Bearer ${key}`
             },
             body: JSON.stringify({
-                model: "dall-e-2",
+                model: "dall-e-3",
                 prompt: prompt,
                 n: 1,
-                size: "1024x1024"
+                size: "1024x1792"
             })
         });
 
